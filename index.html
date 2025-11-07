@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko" class=""> <!-- JS가 이 클래스를 제어하여 다크 모드를 적용합니다. -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3주차 과제 - ESG 대시보드 (LNB, 차트)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN (4단계에서 사용) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 
+      - Noto Sans KR 폰트 CDN
+      - 3주차 과제 보완 (디자인)
+    -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* - 기본 스타일 정의
+          - 다크 모드 스타일 정의
+          - LNB 활성 메뉴 스타일 정의
+          - 페이지 섹션 기본 숨김
+        */
+        body {
+            @apply bg-slate-50 text-slate-900;
+        }
+
+        .dark body {
+            @apply bg-slate-900 text-slate-200;
+        }
+
+        .nav-link.active {
+            @apply bg-blue-100 text-blue-600;
+        }
+
+        .dark .nav-link.active {
+            @apply bg-blue-900 text-blue-300;
+        }
+
+        /* JS가 페이지를 제어할 수 있도록 기본 'block'이 아닌 'none'으로 설정 */
+        .page-section {
+            display: none;
+        }
+
+        /* JS가 로드되기 전이나 기본으로 보여줄 페이지 설정 */
+        #page-dashboard {
+            display: block;
+        }
+    </style>
+    <!-- 
+      - Tailwind 다크모드를 'class' 기반으로 작동하도록 설정
+      - (보완) 로컬 스토리지 또는 시스템 설정에 따라 초기 테마 적용
+    -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+        // 로컬 스토리지에서 테마 설정을 확인하거나, 시스템 설정을 따름
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+</head>
+
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200">
+
+    <!-- 1단계: 상단 헤더 (Header) -->
+    <header
+        class="fixed top-0 left-64 right-0 h-16 bg-white dark:bg-slate-800 shadow-md z-50 border-b border-gray-200 dark:border-slate-700">
+        <!-- 2단계: 헤더 UI 구현 -->
+        <div class="flex items-center justify-between h-full px-4 sm:px-6 lg:px-8">
+            <!-- 헤더 좌측: 현재 페이지 제목 (JS 제어 대상) -->
+            <div>
+                <h1 id="page-title" class="text-xl font-semibold text-slate-800 dark:text-slate-100">대시보드</h1>
+            </div>
+
+            <!-- 헤더 우측: 편의 기능 (다크모드, 프로필) -->
+            <div class="flex items-center space-x-4">
+
+                <!-- 다크 모드 토글 (JS 제어 대상) -->
+                <button id="dark-mode-toggle"
+                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400">
+                    <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a5 5 0 11-10 0 5 5 0 0110 0z" />
+                    </svg>
+                    <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+
+                <!-- 사용자 프로필 (JS 아이콘) -->
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                    JS
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1단계: 좌측 네비게이션 바 (LNB) -->
+    <aside
+        class="fixed top-0 left-0 z-40 w-64 h-full bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700">
+        <!-- 2단계: LNB UI 구현 -->
+        <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-slate-700">
+            <!-- 
+              - 수정: <span>에서 <a> 태그로 변경
+              - JS 제어를 위해 id="logo-link" 추가
+              - 대시보드로 이동하기 위해 data-page 속성 추가 (선택적)
+            -->
+            <a href="#" id="logo-link" data-page="page-dashboard"
+                class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                ESG PoC
+            </a>
+        </div>
+
+        <nav class="flex flex-col p-4 space-y-2 mt-4">
+            <!-- 
+              - 3단계 JS 제어를 위해 공통 클래스(.nav-link) 사용
+              - 'data-page' 속성값은 JS가 제어할 'section'의 ID와 일치시킴
+              - 수정: (R), (C/U/D) 텍스트 제거
+            -->
+            <a href="#" data-page="page-dashboard"
+                class="nav-link active flex items-center space-x-3 p-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                <span>대시보드</span>
+            </a>
+            <a href="#" data-page="page-data"
+                class="nav-link flex items-center space-x-3 p-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>데이터 관리</span>
+            </a>
+            <a href="#" data-page="page-settings"
+                class="nav-link flex items-center space-x-3 p-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>설정</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- 1단계: 메인 컨텐츠 (Main) -->
+    <main class="ml-64 pt-16 h-screen overflow-y-auto bg-slate-50 dark:bg-slate-900">
+        <!-- 2단계: 메인 컨텐츠 UI 구현 -->
+        <div class="p-4 sm:p-6 lg:p-8">
+
+            <!-- 페이지 1: 대시보드 (R) -->
+            <!-- JS 제어를 위해 공통 클래스(.page-section)와 고유 ID 부여 -->
+            <section id="page-dashboard" class="page-section">
+                <!-- 2단계: KPI 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                        <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">총 배출량 (10월)</h3>
+                        <p class="mt-1 text-3xl font-semibold text-slate-900 dark:text-slate-100">450 tCO₂</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                        <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">지난달 대비</h3>
+                        <p class="mt-1 text-3xl font-semibold text-green-600 dark:text-green-400">-5.2%</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                        <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">업계 평균 대비</h3>
+                        <p class="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">+18%</p>
+                    </div>
+                </div>
+                <!-- 2단계 & 4단계: 차트 영역 -->
+                <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                        <h3 class="font-semibold text-slate-900 dark:text-slate-100">월별 배출량 추이</h3>
+                        <!-- 4단계: 이 canvas에 차트가 그려짐 -->
+                        <div class="mt-4 h-64"><canvas id="trendChart"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                        <h3 class="font-semibold text-slate-900 dark:text-slate-100">배출원 비중</h3>
+                        <!-- 4단계: 이 canvas에 차트가 그려짐 -->
+                        <div class="mt-4 h-64"><canvas id="sourceChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 페이지 2: 데이터 관리 (C/U/D) -->
+            <section id="page-data" class="page-section">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                    <!-- 수정: (C/U) 텍스트 제거 -->
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">월별 데이터 입력</h3>
+                    <!-- 2단계: 폼 UI -->
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="select-month"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">대상 월</label>
+                            <select id="select-month"
+                                class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                                <option>2025년 10월</option>
+                                <option>2025년 9월</option>
+                            </select>
+                        </div>
+                        <!-- 4단계: 더미 데이터가 미리 채워진 폼 -->
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="input-power"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">전력 사용량
+                                    (kWh)</label>
+                                <input type="number" id="input-power" value="1000"
+                                    class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="input-gas"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">경유 사용량
+                                    (L)</label>
+                                <input type="number" id="input-gas" value="500"
+                                    class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="input-citygas"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">도시가스 사용량
+                                    (m³)</label>
+                                <input type="number" id="input-citygas" value="300"
+                                    class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <!-- 수정: (Create / Update) 텍스트 제거 -->
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">저장</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 2단계: 테이블 UI -->
+                <div class="mt-8 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                    <!-- 수정: (R/D) 텍스트 제거 -->
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">과거 데이터 목록</h3>
+                    <div class="overflow-x-auto mt-4">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                        대상 월</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                        전력(kWh)</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                        경유(L)</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                        가스(m³)</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                        관리</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+                                <!-- 4단계: 더미 데이터 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025년 9월</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">1100</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">450</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">280</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <!-- 수정: (D) 텍스트 제거 -->
+                                        <button class="text-red-600 hover:text-red-800">삭제</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025년 8월</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">1050</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">510</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">310</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <!-- 수정: (D) 텍스트 제거 -->
+                                        <button class="text-red-600 hover:text-red-800">삭제</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 페이지 3: 설정 -->
+            <section id="page-settings" class="page-section">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+                    <!-- 수정: (U) 텍스트 제거 -->
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">회사 정보 설정</h3>
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <label for="input-company-name"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">회사명</label>
+                            <input type="text" id="input-company-name" value="더존비즈온 춘천캠퍼스"
+                                class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                        </div>
+                        <div>
+                            <label for="select-industry"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">비교 업종</label>
+                            <select id="select-industry"
+                                class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
+                                <option>C.제조업</option>
+                                <option>B.광업</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end">
+                            <!-- 수정: (Update) 텍스트 제거 -->
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">설정 저장</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- 
+      - 3단계: 외부 JS 파일 로드
+      - 'defer' 속성은 HTML 파싱이 끝난 후 스크립트를 실행하도록 보장
+    -->
+    <script src="app.js" defer></script>
+
+</body>
+
+</html>
