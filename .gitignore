@@ -3,3 +3,5 @@
 #제외하기 위한 설정 파일입니다.
 
 node_modules
+
+.env
