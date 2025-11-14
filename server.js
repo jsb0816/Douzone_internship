@@ -13,6 +13,10 @@ const express = require('express');
 const axios = require('axios'); // API 호출을 위한 라이브러리
 const cors = require('cors'); // CORS 문제를 해결하기 위한 라이브러리
 
+// --- ★★★ 1단계: dotenv 라이브러리 불러오기 ★★★ ---
+// (반드시 express 보다 먼저, 파일 최상단에서 실행)
+require('dotenv').config();
+
 // 2. express 앱 생성 및 포트 설정
 const app = express();
 const PORT = 3000; // 우리 백엔드 서버가 3000번 포트를 사용하도록 설정
@@ -29,7 +33,7 @@ app.get('/api/industry-data', async (req, res) => {
     const industryName = req.query.industry_name;
 
     // 2. odcloud.kr API의 서비스 키 ('일반 인증키'가 작동함)
-    const serviceKey = "29b77e8248ed6d45b07dd7e4331dcf6daf9ba3ed42aadb099391b631ffbb53ba";
+    const serviceKey = process.env.SERVICE_KEY;
 
     // 3. 백엔드 서버가 호출할 실제 공공 API 주소 (odcloud.kr, B.광업 데이터)
     // (totalCount가 200대이므로 'perPage=300'으로 모든 데이터를 한 번에 호출)
