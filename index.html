@@ -13,44 +13,7 @@
       - Noto Sans KR 폰트 CDN
       - 3주차 과제 보완 (디자인)
     -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
-
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-
-        /* - 기본 스타일 정의
-          - 다크 모드 스타일 정의
-          - LNB 활성 메뉴 스타일 정의
-          - 페이지 섹션 기본 숨김
-        */
-        body {
-            @apply bg-slate-50 text-slate-900;
-        }
-
-        .dark body {
-            @apply bg-slate-900 text-slate-200;
-        }
-
-        .nav-link.active {
-            @apply bg-blue-100 text-blue-600;
-        }
-
-        .dark .nav-link.active {
-            @apply bg-blue-900 text-blue-300;
-        }
-
-        /* JS가 페이지를 제어할 수 있도록 기본 'block'이 아닌 'none'으로 설정 */
-        .page-section {
-            display: none;
-        }
-
-        /* JS가 로드되기 전이나 기본으로 보여줄 페이지 설정 */
-        #page-dashboard {
-            display: block;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- 
       - Tailwind 다크모드를 'class' 기반으로 작동하도록 설정
       - (보완) 로컬 스토리지 또는 시스템 설정에 따라 초기 테마 적용
@@ -179,8 +142,10 @@
                         <p class="mt-1 text-3xl font-semibold text-green-600 dark:text-green-400">-5.2%</p>
                     </div>
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-                        <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">업계 평균 대비</h3>
-                        <p class="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">+18%</p>
+                        <h3 id="industry-kpi-title" class="text-sm font-medium text-slate-500 dark:text-slate-400">업계 평균
+                            대비</h3>
+                        <p id="industry-kpi-value" class="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">
+                            +18%</p>
                     </div>
                 </div>
                 <!-- 2단계 & 4단계: 차트 영역 -->
@@ -239,8 +204,8 @@
                             </div>
                         </div>
                         <div class="md:col-span-2 flex justify-end">
-                            <!-- 수정: (Create / Update) 텍스트 제거 -->
-                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">저장</button>
+                            <button id="save-data-button"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">저장</button>
                         </div>
                     </div>
                 </div>
@@ -314,13 +279,21 @@
                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300">비교 업종</label>
                             <select id="select-industry"
                                 class="mt-1 block w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md shadow-sm">
-                                <option>C.제조업</option>
                                 <option>B.광업</option>
+                                <option>051.석탄광업</option>
+                                <option>052.원유및천연가스채굴업</option>
+                                <option>061.철광업</option>
+                                <option>062.비철금속광업</option>
+                                <option>071.토사석광업</option>
+                                <option>072.기타비금속광물광업</option>
+                                <option>080.광업지원서비스업</option>
                             </select>
                         </div>
                         <div class="flex justify-end">
                             <!-- 수정: (Update) 텍스트 제거 -->
-                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">설정 저장</button>
+
+                            <button id="save-settings-button"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">설정 저장</button>
                         </div>
                     </div>
                 </div>

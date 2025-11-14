@@ -1,0 +1,5 @@
+#깃허브(GitHub)에 올릴 때, 불필요하고 용량이 큰 'node_modules' 폴더를
+
+#제외하기 위한 설정 파일입니다.
+
+node_modules
